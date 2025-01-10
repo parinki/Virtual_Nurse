@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Diabetes Management Form</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      .container {
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+      }
+      .column {
+        flex: 1;
+      }
+      .tab-buttons button {
+        margin-right: 5px;
+      }
+      textarea {
+        width: 100%;
+        height: 200px;
+      }
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      .tabs {
+        display: flex;
+        border-bottom: 2px solid #ccc;
+        margin-bottom: 20px;
+      }
+      .tab-button {
+        padding: 10px 20px;
+        cursor: pointer;
+        border: none;
+        background: #f9f9f9;
+        border-top-left-radius: 5px;
+        border-top-right-radius: 5px;
+        margin-right: 5px;
+      }
+      .tab-button.active {
+        background: #fff;
+        border: 2px solid #ccc;
+        border-bottom: none;
+      }
+      .tab-content {
+        display: none;
+      }
+      .tab-content.active {
+        display: block;
+      }
+      .tabsexample {
+        display: flex;
+        cursor: pointer;
+        margin-bottom: 20px;
+    }
+    .tabexample {
+        padding: 10px 20px;
+        border: 1px solid #ccc;
+        border-bottom: none;
+        background-color: #f9f9f9;
+    }
+    .tabexample.active {
+        background-color: white;
+        border-top: 2px solid #007BFF;
+    }
+    .tab-contentexample {
+        border: 1px solid #ccc;
+        padding: 20px;
+        display: none;
+    }
+    .tab-contentexample.active {
+        display: block;
+    }
+    pre {
+        background-color: #f8f9fa;
+        padding: 10px;
+        border: 1px solid #ddd;
+        overflow-x: auto;
+    }
+    </style>
+    <script>
+        function switchTab_1(tabName) {
+            document
+              .querySelectorAll(".tab")
+              .forEach((tab) => (tab.style.display = "none"));
+            document.getElementById(tabName).style.display = "block";
+          }
+      function switchTab(tabId) {
+        document
+          .querySelectorAll(".tab-button")
+          .forEach((button) => button.classList.remove("active"));
+        document
+          .querySelectorAll(".tab-content")
+          .forEach((content) => content.classList.remove("active"));
+
+        document.getElementById(tabId).classList.add("active");
+        document.querySelector(`[data-tab="${tabId}"]`).classList.add("active");
+      }
+      function switchTab_ex(event, tabId) {
+        const tabs = document.querySelectorAll('.tabexample');
+        const contents = document.querySelectorAll('.tab-contentexample');
+
+        tabs.forEach(tab => tab.classList.remove('active'));
+        contents.forEach(content => content.classList.remove('active'));
+
+        event.currentTarget.classList.add('active');
+        document.getElementById(tabId).classList.add('active');
+    }
+
+      function generateJSON() {
+        const form = document.getElementById("diabetes-form");
+        const formData = new FormData(form);
+        const jsonData = {};
+
+        formData.forEach((value, key) => {
+          const keys = key.split(".");
+          let current = jsonData;
+
+          keys.forEach((k, index) => {
+            if (index === keys.length - 1) {
+              if (k.endsWith("[]")) {
+                const arrayKey = k.slice(0, -2);
+                if (!current[arrayKey]) current[arrayKey] = [];
+                current[arrayKey].push(value);
+              } else {
+                current[k] = value;
+              }
+            } else {
+              if (!current[k]) current[k] = {};
+              current = current[k];
+            }
+          });
+        });
+
+        document.getElementById("json-preview").value = JSON.stringify(
+          jsonData,
+          null,
+          4
+        );
+      }
+
+      function copyToClipboard_custom() {
+        const preview = document.getElementById("json-preview");
+        preview.select();
+        document.execCommand("copy");
+        alert("Copied to clipboard!");
+      }
+
+      function downloadJSON() {
+        const json = document.getElementById("json-preview").value;
+        const blob = new Blob([json], { type: "application/json" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "patient_data.json";
+        link.click();
+      }
+      function generateDateTimeJSON() {
+        const date = document.getElementById("date").value;
+        const time = document.getElementById("time").value;
+
+        if (!date || !time) {
+          alert("Please select both date and time.");
+          return;
+        }
+
+        const dateTime = `${date}T${time}`;
+        const jsonOutput = {
+          date_time: dateTime,
+        };
+
+        document.getElementById("json-output").value = JSON.stringify(
+          jsonOutput,
+          null,
+          4
+        );
+      }
+
+      function copyToClipboard() {
+        const output = document.getElementById("json-output");
+        output.select();
+        document.execCommand("copy");
+        alert("JSON copied to clipboard!");
+      }
+
+      function downloadJSON() {
+        const json = document.getElementById("json-output").value;
+        if (!json) {
+          alert("No JSON to download. Please generate JSON first.");
+          return;
+        }
+
+        const blob = new Blob([json], { type: "application/json" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "date_time.json";
+        link.click();
+      }
+    </script>
+  </head>
+  <body>
+    <div class="tabs">
+      <button
+        class="tab-button active"
+        data-tab="tab1"
+        onclick="switchTab('tab1')"
+      >
+        Custom Patient Profile
+      </button>
+      <button class="tab-button" data-tab="tab2" onclick="switchTab('tab2')">
+        Example Patient Profile & Journey
+      </button>
+    </div>
+    <div id="tab1" class="tab-content active">
+      <div class="container">
+        <!-- Left Column: Diabetes Management Form -->
+        <div class="column">
+          <h1>Diabetes Management Form</h1>
+
+          <div class="tab-buttons">
+            <button onclick="switchTab_1('patient-info')">Patient Info</button>
+            <button onclick="switchTab_1('health-metrics')">
+              Health Metrics
+            </button>
+            <button onclick="switchTab_1('medication-schedule')">
+              Medication Schedule
+            </button>
+            <button onclick="switchTab_1('reminders')">Reminders</button>
+            <button onclick="switchTab_1('emergency-triggers')">
+              Emergency Triggers
+            </button>
+          </div>
+
+          <form id="diabetes-form">
+            <!-- Patient Info -->
+            <div id="patient-info" class="tab">
+              <h2>Patient Info</h2>
+              <label
+                >Patient ID:
+                <input
+                  type="text"
+                  name="patient_info.patient_id"
+                  value="12345" /></label
+              ><br />
+              <label
+                >Name:
+                <input
+                  type="text"
+                  name="patient_info.name"
+                  value="John Doe" /></label
+              ><br />
+              <label
+                >Age:
+                <input
+                  type="number"
+                  name="patient_info.age"
+                  value="55" /></label
+              ><br />
+              <label
+                >Gender:
+                <input
+                  type="text"
+                  name="patient_info.gender"
+                  value="male" /></label
+              ><br />
+              <label
+                >Phone:
+                <input
+                  type="text"
+                  name="patient_info.contact.phone"
+                  value="+123456789" /></label
+              ><br />
+              <label
+                >Email:
+                <input
+                  type="email"
+                  name="patient_info.contact.email"
+                  value="johndoe@example.com" /></label
+              ><br />
+            </div>
+
+            <!-- Health Metrics -->
+            <div id="health-metrics" class="tab">
+              <h2>Health Metrics</h2>
+              <label
+                >FPG:
+                <input
+                  type="number"
+                  name="health_metrics.FPG"
+                  value="110" /></label
+              ><br />
+              <label
+                >A1C:
+                <input
+                  type="number"
+                  step="0.1"
+                  name="health_metrics.A1C"
+                  value="6.0" /></label
+              ><br />
+              <label
+                >eGFR:
+                <input
+                  type="number"
+                  name="health_metrics.eGFR"
+                  value="55" /></label
+              ><br />
+              <label
+                >Serum Creatinine:
+                <input
+                  type="number"
+                  name="health_metrics.Serum_Creatinine"
+                  value="1.5" /></label
+              ><br />
+              <label
+                >BUN:
+                <input
+                  type="number"
+                  name="health_metrics.BUN"
+                  value="25" /></label
+              ><br />
+            </div>
+
+            <!-- Medication Schedule -->
+            <div id="medication-schedule" class="tab">
+              <h2>Medication Schedule</h2>
+              <label
+                >Medication Name 1:
+                <input
+                  type="text"
+                  name="medication_schedule.0.medication_name"
+                  value="Metformin" /></label
+              ><br />
+              <label
+                >Dosage 1:
+                <input
+                  type="text"
+                  name="medication_schedule.0.dosage"
+                  value="500mg" /></label
+              ><br />
+              <label
+                >Time 1:
+                <input
+                  type="time"
+                  name="medication_schedule.0.time"
+                  value="08:00" /></label
+              ><br />
+              <label
+                >Frequency 1:
+                <input
+                  type="text"
+                  name="medication_schedule.0.frequency"
+                  value="daily" /></label
+              ><br />
+
+              <label
+                >Medication Name 2:
+                <input
+                  type="text"
+                  name="medication_schedule.1.medication_name"
+                  value="Insulin" /></label
+              ><br />
+              <label
+                >Dosage 2:
+                <input
+                  type="text"
+                  name="medication_schedule.1.dosage"
+                  value="10 units" /></label
+              ><br />
+              <label
+                >Time 2:
+                <input
+                  type="time"
+                  name="medication_schedule.1.time"
+                  value="20:00" /></label
+              ><br />
+              <label
+                >Frequency 2:
+                <input
+                  type="text"
+                  name="medication_schedule.1.frequency"
+                  value="daily" /></label
+              ><br />
+            </div>
+
+            <!-- Reminders -->
+            <div id="reminders" class="tab">
+              <h2>Reminders</h2>
+              <label
+                >Enable Medication Reminder:
+                <input
+                  type="checkbox"
+                  name="reminders.medication.enabled"
+                  checked /></label
+              ><br />
+              <label
+                >Advance Notice (Minutes):
+                <input
+                  type="number"
+                  name="reminders.medication.advance_notice_minutes"
+                  value="10" /></label
+              ><br />
+
+              <label
+                >Enable Blood Sugar Check:
+                <input
+                  type="checkbox"
+                  name="reminders.blood_sugar_check.enabled"
+                  checked /></label
+              ><br />
+              <label
+                >Schedule:
+                <input
+                  type="text"
+                  name="reminders.blood_sugar_check.schedule[]"
+                  value="07:00" /></label
+              ><br />
+              <label
+                >Schedule:
+                <input
+                  type="text"
+                  name="reminders.blood_sugar_check.schedule[]"
+                  value="19:00" /></label
+              ><br />
+
+              <label
+                >Enable Appointments:
+                <input
+                  type="checkbox"
+                  name="reminders.appointment.enabled"
+                  checked /></label
+              ><br />
+              <label
+                >Upcoming Appointment 1:
+                <input
+                  type="text"
+                  name="reminders.appointment.upcoming_appointments.0.type"
+                  value="doctor_visit" /></label
+              ><br />
+              <label
+                >Date 1:
+                <input
+                  type="date"
+                  name="reminders.appointment.upcoming_appointments.0.date"
+                  value="2024-12-20" /></label
+              ><br />
+              <label
+                >Time 1:
+                <input
+                  type="time"
+                  name="reminders.appointment.upcoming_appointments.0.time"
+                  value="15:00" /></label
+              ><br />
+              <label
+                >Location 1:
+                <input
+                  type="text"
+                  name="reminders.appointment.upcoming_appointments.0.location"
+                  value="ABC Hospital" /></label
+              ><br />
+
+              <label
+                >Upcoming Appointment 2:
+                <input
+                  type="text"
+                  name="reminders.appointment.upcoming_appointments.1.type"
+                  value="annual_health_checkup" /></label
+              ><br />
+              <label
+                >Date 2:
+                <input
+                  type="date"
+                  name="reminders.appointment.upcoming_appointments.1.date"
+                  value="2025-01-15" /></label
+              ><br />
+              <label
+                >Time 2:
+                <input
+                  type="time"
+                  name="reminders.appointment.upcoming_appointments.1.time"
+                  value="09:00" /></label
+              ><br />
+              <label
+                >Location 2:
+                <input
+                  type="text"
+                  name="reminders.appointment.upcoming_appointments.1.location"
+                  value="XYZ Clinic" /></label
+              ><br />
+            </div>
+
+            <!-- Emergency Triggers -->
+            <div id="emergency-triggers" class="tab">
+              <h2>Emergency Triggers</h2>
+              <label
+                >Hypoglycemia Threshold:
+                <input
+                  type="number"
+                  name="emergency_triggers.hypoglycemia_threshold"
+                  value="70" /></label
+              ><br />
+              <label
+                >Hyperglycemia Threshold:
+                <input
+                  type="number"
+                  name="emergency_triggers.hyperglycemia_threshold"
+                  value="180" /></label
+              ><br />
+              <label
+                >Critical eGFR:
+                <input
+                  type="number"
+                  name="emergency_triggers.eGFR_critical"
+                  value="30" /></label
+              ><br />
+
+              <label
+                >Contact Emergency Enabled:
+                <input
+                  type="checkbox"
+                  name="emergency_triggers.contact_emergency.enabled"
+                  checked /></label
+              ><br />
+
+              <label
+                >Emergency Contact 1 Name:
+                <input
+                  type="text"
+                  name="emergency_triggers.contact_emergency.contact_list.0.name"
+                  value="Jane Doe" /></label
+              ><br />
+              <label
+                >Relation 1:
+                <input
+                  type="text"
+                  name="emergency_triggers.contact_emergency.contact_list.0.relation"
+                  value="wife" /></label
+              ><br />
+              <label
+                >Phone 1:
+                <input
+                  type="text"
+                  name="emergency_triggers.contact_emergency.contact_list.0.phone"
+                  value="+123456789" /></label
+              ><br />
+
+              <label
+                >Emergency Contact 2 Name:
+                <input
+                  type="text"
+                  name="emergency_triggers.contact_emergency.contact_list.1.name"
+                  value="Dr. Smith" /></label
+              ><br />
+              <label
+                >Relation 2:
+                <input
+                  type="text"
+                  name="emergency_triggers.contact_emergency.contact_list.1.relation"
+                  value="primary_care_physician" /></label
+              ><br />
+              <label
+                >Phone 2:
+                <input
+                  type="text"
+                  name="emergency_triggers.contact_emergency.contact_list.1.phone"
+                  value="+987654321" /></label
+              ><br />
+            </div>
+          </form>
+
+          <button onclick="generateJSON()">Update</button>
+
+          <h2>Generated JSON</h2>
+          <textarea id="json-preview" readonly></textarea><br />
+          <button onclick="copyToClipboard_custom()">Copy</button>
+          <button onclick="downloadJSON()">Download</button>
+
+          <script>
+            switchTab_1("patient-info");
+          </script>
+        </div>
+        <!-- Right Column: Generate Date Time JSON -->
+        <div class="column">
+          <h1>Generate Date Time JSON</h1>
+
+          <label for="date">Select Date:</label>
+          <input type="date" id="date" />
+
+          <label for="time">Select Time:</label>
+          <input type="time" id="time" />
+
+          <button onclick="generateDateTimeJSON()">Generate JSON</button>
+
+          <h2>Generated JSON</h2>
+          <textarea id="json-output" readonly></textarea>
+
+          <button onclick="copyToClipboard()">Copy to Clipboard</button>
+          <button onclick="downloadJSON()">Download JSON</button>
+        </div>
+      </div>
+    </div>
+    <div id="tab2" class="tab-content">
+      <h1>User Journey - Virtual Nurse</h1>
+
+      <div class="tabsexample">
+          <div class="tabexample active" onclick="switchTab_ex(event, 'persona1example')">Persona 1: สมชาย สุขภาพดีผู้สูงวัย</div>
+          <div class="tabexample" onclick="switchTab_ex(event, 'persona2example')">Persona 2: มณี แม่บ้านผู้ยุ่งเหยิง</div>
+          <div class="tabexample" onclick="switchTab_ex(event, 'persona3example')">Persona 3: อเล็กซ์ ไอทีสายลุย</div>
+      </div>
+  
+      <div id="persona1example" class="tab-contentexample active">
+          <h2>Persona 1: สมชาย สุขภาพดีผู้สูงวัย</h2>
+          <p>
+            อายุ: 65 ปี <br>
+            สถานะ: เกษียณ <br>
+            โรคประจำตัว: เบาหวานชนิดที่ 2 <br>
+            พฤติกรรม: ใส่ใจสุขภาพ, ชอบเทคโนโลยีพื้นฐาน <br>
+            เป้าหมาย: ควบคุมระดับน้ำตาลในเลือดให้ปกติ และเลี่ยงภาวะแทรกซ้อน</p>
+          <h3>Patient Profile</h3>
+          <pre>{
+      "patient_info": {
+          "patient_id": "001",
+          "name": "สมชาย สุขภาพดี",
+          "age": 65,
+          "gender": "male",
+          "contact": {
+              "phone": "+66123456789",
+              "email": "somchai@example.com"
+          }
+      },
+      "health_metrics": {
+          "FPG": "120",
+          "A1C": "7.0",
+          "eGFR": "70",
+          "Serum_Creatinine": "1.2",
+          "BUN": "18"
+      },
+      "medication_schedule": {
+          "0": {
+              "medication_name": "Metformin",
+              "dosage": "500mg",
+              "time": "08:00",
+              "frequency": "daily"
+          }
+      },
+      "reminders": {
+          "medication": { "enabled": "on", "advance_notice_minutes": "10" },
+          "blood_sugar_check": { "enabled": "on", "schedule": ["07:00", "19:00"] }
+      },
+      "emergency_triggers": {
+          "hypoglycemia_threshold": "70",
+          "hyperglycemia_threshold": "180"
+      }
+  }</pre>
+  
+          <h3>User Journey</h3>
+          <ul>
+              <li><strong>เริ่มต้นวัน</strong>: <code>{"date_time": "2025-01-19T07:00:00"}</code></li>
+              <li><strong>กลางวัน</strong>: <code>{"date_time": "2025-01-19T12:00:00"}</code></li>
+              <li><strong>ก่อนนอน</strong>: <code>{"date_time": "2025-01-19T20:00:00"}</code></li>
+          </ul>
+      </div>
+  
+      <div id="persona2example" class="tab-contentexample">
+          <h2>Persona 2: มณี แม่บ้านผู้ยุ่งเหยิง</h2>
+          <p>อายุ: 45 ปี <br>
+            สถานะ: แม่บ้านมีลูก 2 คน <br>
+            โรคประจำตัว: เบาหวาน, ไขมันในเลือดสูง <br>
+            พฤติกรรม: ไม่ค่อยมีเวลาสำหรับตัวเอง, ลืมตรวจสุขภาพบ่อย <br>
+            เป้าหมาย: ปรับพฤติกรรมสุขภาพ และลดโอกาสเกิดภาวะหัวใจขาดเลือด</p>
+          <h3>Patient Profile</h3>
+          <pre>{
+      "patient_info": {
+          "patient_id": "002",
+          "name": "มณี ผู้ยุ่งเหยิง",
+          "age": 45,
+          "gender": "female",
+          "contact": {
+              "phone": "+66987654321",
+              "email": "maneeworkingmom@example.com"
+          }
+      },
+      "health_metrics": {
+          "FPG": "140",
+          "A1C": "8.0",
+          "LDL": "160",
+          "HDL": "40",
+          "Triglyceride": "250"
+      },
+      "medication_schedule": {
+          "0": {
+              "medication_name": "Statin",
+              "dosage": "20mg",
+              "time": "21:00",
+              "frequency": "daily"
+          },
+          "1": {
+              "medication_name": "Metformin",
+              "dosage": "500mg",
+              "time": "08:00",
+              "frequency": "daily"
+          }
+      },
+      "reminders": {
+          "medication": { "enabled": "on", "advance_notice_minutes": "15" },
+          "blood_sugar_check": { "enabled": "on", "schedule": ["06:30", "18:30"] }
+      }
+  }</pre>
+  
+          <h3>User Journey</h3>
+          <ul>
+              <li><strong>เช้า</strong>: <code>{"date_time": "2025-01-19T06:30:00"}</code></li>
+              <li><strong>บ่าย</strong>: <code>{"date_time": "2025-01-19T14:00:00"}</code></li>
+              <li><strong>กลางคืน</strong>: <code>{"date_time": "2025-01-19T21:00:00"}</code></li>
+          </ul>
+      </div>
+  
+      <div id="persona3example" class="tab-contentexample">
+          <h2>Persona 3: อเล็กซ์ ไอทีสายลุย</h2>
+          <p>อายุ: 30 ปี <br>
+            สถานะ: พนักงานบริษัท, ทำงานหนักและชอบกิจกรรมกลางแจ้ง <br>
+            โรคประจำตัว: ไม่มีโรคประจำตัว (Simple Diseases) <br>
+            พฤติกรรม: ไม่ใส่ใจสุขภาพมากนัก, มักลืมตรวจสุขภาพ <br>
+            เป้าหมาย: ป้องกันโรค NCD และติดตามอาการป่วยเล็กน้อย</p>
+          <h3>Patient Profile</h3>
+          <pre>{
+      "patient_info": {
+          "patient_id": "003",
+          "name": "อเล็กซ์ ไอทีสายลุย",
+          "age": 30,
+          "gender": "male",
+          "contact": {
+              "phone": "+66811223344",
+              "email": "alextech@example.com"
+          }
+      },
+      "health_metrics": {},
+      "medication_schedule": {},
+      "reminders": {
+          "general_health_checkup": { "enabled": "on", "schedule": ["2025-04-15"] }
+      }
+  }</pre>
+  
+          <h3>User Journey</h3>
+          <ul>
+              <li><strong>เช้า</strong>: <code>{"date_time": "2025-01-19T06:00:00"}</code></li>
+              <li><strong>ระหว่างวัน</strong>: <code>{"date_time": "2025-01-19T12:00:00"}</code></li>
+              <li><strong>ก่อนวันสำคัญ</strong>: <code>{"date_time": "2025-01-18T10:00:00"}</code></li>
+          </ul>
+      </div>
+    </div>
+
+    <script>
+      // Ensure the default tab is active on load
+      switchTab("tab1");
+    </script>
+  </body>
+</html>
